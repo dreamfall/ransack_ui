@@ -93,6 +93,8 @@
           else
             previous_val = predicate_select.val()
 
+          query_input = @change_attribute_type(base_id, selected, column_type)
+
         # Build array of supported predicates
         predicates = Ransack.type_predicates[column_type] || []
         predicates = $.map predicates, (p) -> [p, Ransack.predicates[p]]
@@ -177,7 +179,6 @@
 
             return
 
-
       # Hide query input when not needed
       if p in ["true", "false", "blank", "present", "null", "not_null", "false_value", "true_value"]
         # If Select2 is on query input, remove and set defaults
@@ -235,6 +236,28 @@
           alt_labels = Ransack.alt_predicates_i18n[type] || {}
 
       alt_labels[p] || default_label
+
+    # Change the attribute html5 type by cloning, injecting then removing
+    change_attribute_type: (id, attribute, column_type) ->
+      query_input = $("input##{id}v_0_value")
+
+      input_type = switch column_type
+        when 'string' then 'text'
+        when 'float' then 'decimal'
+        when 'boolean_value', 'null' then false
+        else column_type
+
+      if input_type != false
+        new_query_input = query_input.clone()
+        new_query_input.attr('type', input_type)
+
+        new_query_input.insertBefore(query_input)
+        query_input.remove()
+        new_query_input.attr('id', "#{id}v_0_value")
+
+        return new_query_input
+      else
+        return query_input
 
     multi_query_changed: (e) ->
       target = $(e.currentTarget)

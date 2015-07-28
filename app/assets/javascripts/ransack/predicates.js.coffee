@@ -28,14 +28,14 @@ Ransack.type_predicates = {}
 # Setup input field types for each predicate
 Ransack.predicate_inputs = {}
 ((o, f) -> f.call o) Ransack.predicate_inputs, ->
-  @cont = @matches = @start = @end = @in = 'string'
+  @cont = @matches = @start = @end = @in = 'text'
   @present = @null = @true = @boolean_value = false
-  @eq = @gt = @lt = (type) ->
+  @eq = @gt = @lt = @gteq = @lteq = (type) ->
     switch type
-      when 'string','text' then 'string'
-      when 'integer','float','decimal' then 'numeric'
-      when 'date','datetime','time' then type
-      when 'null' then type
+      when 'string','text' then 'text'
+      when 'integer' then 'number'
+      when 'float','decimal' then 'decimal'
+      when 'date','datetime','time' then type # Note datetime is not supported
       else false # Hide for unhandled types.
 
 # Setup predicates for fixed select options. Includes relevant any/all permutations
