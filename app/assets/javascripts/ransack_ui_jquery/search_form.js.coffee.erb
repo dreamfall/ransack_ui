@@ -9,7 +9,7 @@
       el.on 'click', '.nest_ransack_fields',       $.proxy(@nest_ransack_fields, this)
       el.on 'change', 'select.ransack_predicate',  $.proxy(@predicate_changed, this)
       el.on 'change', 'select.ransack_attribute',  $.proxy(@attribute_changed, this)
-      # el.on 'change', 'select.ransack_query_multi', $.proxy(@multi_query_changed, this)
+      el.on 'change', 'input.ransack_query_multi', $.proxy(@multi_query_changed, this)
 
       # Store initial predicates and set up Select2 on select lists in .filters
       containers = el.find('.filters')
@@ -237,49 +237,42 @@
 
       alt_labels[p] || default_label
 
-    # multi_query_changed: (e) ->
-      # target = $(e.currentTarget)
+    multi_query_changed: (e) ->
+      target = $(e.currentTarget)
 
       # Fetch all query inputs for condition
-      # base_name = target.data('base-name')
-      # inputs = @element.find("input[name^=\"#{base_name}\"]")
+      base_name = target.data('base-name')
+      inputs = @element.find("input[name^=\"#{base_name}\"]")
 
       # Set the original query input to the first value before shifting inputs and values
-      # $(inputs[0]).val(target.val())
-      # inputs = inputs.slice(1)
-      # values = target.val().slice(1)
+      $(inputs[0]).val(e.val[0])
+
+      inputs = inputs.slice(1)
+      values = e.val.slice(1)
 
       # If value was added after the first value, then append extra input with added value
-      # if values.length && e.added
-        # @add_query_input(target, base_name, inputs.length + 1, e.added.id)
+      if values.length && e.added
+        @add_query_input(target, base_name, inputs.length + 1, e.added.id)
 
-      # else if e.removed
+      else if e.removed
         # If value was removed, clear all extra inputs, then rebuild inputs for extra terms
-        # inputs.remove()
-        # $.each values, (i, v) =>
-          # @add_query_input(target, base_name, i + 1, v)
-# ['canada', 'usa']
-# a[0]; a[1]
-# {'0' => 'canada', '1' => 'usa'}
-# {id: 0, text: 'canada'}
+        inputs.remove()
+        $.each values, (i, v) =>
+          @add_query_input(target, base_name, i + 1, v)
 
     setup_multi_query_input: (predicate_el, query_el, multi_id, options) ->
       base_name = predicate_el.attr('name').slice(0, -3) + '[v]'
       query_el.after(
-        $('<select multiple="multiple" class="ransack_query_multi" id="' + multi_id + '" ' +
+        $('<input class="ransack_query_multi" id="' + multi_id + '" ' +
           'style="width:' + (query_el.width() * 1.5) + 'px;" ' +
-          'name="' + base_name + '" ' +
           'data-base-name="' + base_name + '" />'))
 
       # Fetch all existing values
       inputs = @element.find("input[name^=\"#{base_name}\"]")
       values = $.map inputs, (el) ->
         el.value
-
-      # values = $.map inputs, (el, i) ->
-      #   {id: i, text: el.value}
       # Hide all query inputs
-      inputs.remove()
+      inputs.hide()
 
       if jQuery.fn.select2?
         # Find newly created input and setup Select2
@@ -309,8 +302,8 @@
             tokenSeparators: [',']
             formatNoMatches: (t) ->
               "Add a search term"
-          .val(values)
-          .trigger("change.select2")
+
+        multi_query.select2('val', values)
 
     add_query_input: (base_input, base_name, id, value) ->
       base_input.after $('<input name="'+base_name+'['+id+'][value]" '+
