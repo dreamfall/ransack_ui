@@ -179,7 +179,7 @@ module Ransack
                   else
                     route_name = autocomplete_source.first.to_s.gsub(/_(url|path)$/, '')
                     controller_path = Rails.application.routes.named_routes[route_name].defaults[:controller]
-                    Rails.application.routes_url_helpers.send(*autocomplete_source)
+                    Rails.application.routes.url_helpers.send(*autocomplete_source)
                   end
 
             # If field is a foreign key, set up 'data-ajax-*' attributes for auto-complete
