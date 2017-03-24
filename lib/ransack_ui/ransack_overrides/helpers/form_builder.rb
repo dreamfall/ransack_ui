@@ -141,9 +141,9 @@ module Ransack
 
           # Set model name as label for 'id' column on that model's table.
           if c == 'id'
-            foreign_klass = object.context.traverse(base).model_name
+            foreign_klass = object.context.traverse(base)
             # Check that model can autocomplete. If not, skip this id column.
-            next nil unless foreign_klass.constantize._ransack_autocompletes_through.present?
+            next nil unless foreign_klass._ransack_autocompletes_through.present?
             # Try and find the attribute label at ransack.associations.subscriber.association otherwise default to the foreign klass name
             attribute_label = I18n.translate(
               base,
@@ -167,7 +167,7 @@ module Ransack
             }.to_json
           end
 
-          if foreign_klass && (autocomplete_source = foreign_klass.constantize._ransack_autocompletes_through rescue false)
+          if foreign_klass && (autocomplete_source = foreign_klass._ransack_autocompletes_through rescue false)
             url = case autocomplete_source.first
                   when Class
                     controller_path = autocomplete_source.first.controller_path
