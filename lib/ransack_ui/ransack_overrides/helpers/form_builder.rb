@@ -141,17 +141,17 @@ module Ransack
 
           # Set model name as label for 'id' column on that model's table.
           if c == 'id'
-            foreign_klass = object.context.traverse(base)
+            @foreign_klass = object.context.traverse(base)
             # Check that model can autocomplete. If not, skip this id column.
-            next nil unless foreign_klass._ransack_autocompletes_through.present?
+            next nil unless autocomplete_source
             # Try and find the attribute label at ransack.associations.subscriber.association otherwise default to the foreign klass name
             attribute_label = I18n.translate(
               base,
               :scope => "ransack.associations.#{object.context.klass.name.demodulize.downcase}",
-              :default => I18n.translate(foreign_klass, :default => foreign_klass)
+              :default => I18n.translate(@foreign_klass, :default => @foreign_klass)
             )
           else
-            foreign_klass = foreign_keys[c.to_sym]
+            @foreign_klass = foreign_keys[c.to_sym]
           end
 
 
@@ -167,7 +167,7 @@ module Ransack
             }.to_json
           end
 
-          if foreign_klass && (autocomplete_source = foreign_klass._ransack_autocompletes_through rescue false)
+          if autocomplete_source
             url = case autocomplete_source.first
                   when Class
                     controller_path = autocomplete_source.first.controller_path
@@ -197,6 +197,12 @@ module Ransack
         end.compact
       rescue UntraversableAssociationError => e
         nil
+      end
+
+      private
+
+      def autocomplete_source
+        @autocomplete_source ||= @foreign_klass && @foreign_klass._ransack_autocompletes_through rescue nil
       end
     end
 
