@@ -239,53 +239,52 @@ module Ransack
       end
     end
 
-      private
+    private
 
-      def searchable_attributes_for_base(base)
-        cache_prefix = object.context.klass.table_name
-        cache_key = base.blank? ? cache_prefix : [cache_prefix, base].join('_')
+    def searchable_attributes_for_base(base)
+      cache_prefix = object.context.klass.table_name
+      cache_key = base.blank? ? cache_prefix : [cache_prefix, base].join('_')
 
-        self.class.cached_searchable_attributes_for_base[cache_key] ||= object.context.searchable_attributes(base).map do |column, type|
-          klass = object.context.traverse(base)
-          foreign_keys = klass.reflect_on_all_associations.select(&:belongs_to?)
-                              .each_with_object({}) { |r, h| h[r.foreign_key.to_sym] = r.class_name }
+      self.class.cached_searchable_attributes_for_base[cache_key] ||= object.context.searchable_attributes(base).map do |column, type|
+        klass = object.context.traverse(base)
+        foreign_keys = klass.reflect_on_all_associations.select(&:belongs_to?)
+                         .each_with_object({}) { |r, h| h[r.foreign_key.to_sym] = r.class_name }
 
-          # Don't show 'id' column for base model
-          next nil if base.blank? && column == 'id'
+        # Don't show 'id' column for base model
+        next nil if base.blank? && column == 'id'
 
-          attribute = attr_from_base_and_column(base, column)
-          attribute_label = Translate.attribute(attribute, context: object.context)
+        attribute = attr_from_base_and_column(base, column)
+        attribute_label = Translate.attribute(attribute, context: object.context)
 
-          # Set model name as label for 'id' column on that model's table.
-          if column == 'id'
-            foreign_klass = object.context.traverse(base).model_name
-            # Check that model can autocomplete. If not, skip this id column.
-            next nil unless ActiveSupport::Inflector.constantize(foreign_klass.to_s)._ransack_can_autocomplete
+        # Set model name as label for 'id' column on that model's table.
+        if column == 'id'
+          foreign_klass = object.context.traverse(base).model_name
+          # Check that model can autocomplete. If not, skip this id column.
+          next nil unless ActiveSupport::Inflector.constantize(foreign_klass.to_s)._ransack_can_autocomplete
 
-            attribute_label = I18n.translate(foreign_klass, default: foreign_klass)
-          else
-            foreign_klass = foreign_keys[column.to_sym]
-          end
+          attribute_label = I18n.translate(foreign_klass, default: foreign_klass)
+        else
+          foreign_klass = foreign_keys[column.to_sym]
+        end
 
-          attribute_data = {
-            label: attribute_label,
-            type: type,
-            column: column,
-            attribute: attribute
-          }
-          attribute_data[:foreign_klass] = foreign_klass if foreign_klass
-          attribute_data
-        end.compact
-      end
+        attribute_data = {
+          label: attribute_label,
+          type: type,
+          column: column,
+          attribute: attribute
+        }
+        attribute_data[:foreign_klass] = foreign_klass if foreign_klass
+        attribute_data
+      end.compact
+    end
 
-      def foreign_klass_for_attribute(attribute)
-        associations = object.context.klass.ransackable_associations
-        bases = [''] + association_array(associations)
+    def foreign_klass_for_attribute(attribute)
+      associations = object.context.klass.ransackable_associations
+      bases = [''] + association_array(associations)
 
-        bases.each do |base|
-          searchable_attributes_for_base(base).each do |attribute_data|
-            return attribute_data[:foreign_klass] if attribute == attribute_data[:attribute]
-          end
+      bases.each do |base|
+        searchable_attributes_for_base(base).each do |attribute_data|
+          return attribute_data[:foreign_klass] if attribute == attribute_data[:attribute]
         end
       end
     end
